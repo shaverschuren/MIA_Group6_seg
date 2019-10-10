@@ -158,11 +158,14 @@ def create_labels(image_number, slice_number, task):
     if task == 'brain':
         Y = I>0
     elif task == 'tissue':
-        white_matter = (I == 2) + (I == 5)
-        gray_matter  = I == 7 | I == 3
-        csf         = I == 4 | I == 8
-        background  = I == 0 |  I == 1 | I == 6
-        Y = I
+        white_matter = (I == 2) | (I == 5)
+        gray_matter  = (I == 7) | (I == 3)
+        csf         = (I == 4) | (I == 8)
+        background  = (I == 0) |  (I == 1) | (I == 6)
+        # print(I.flags)
+        Y = np.copy(I)
+        # print(Y.flags)
+        # Y.setflags(write=1)
         Y[background] = 0
         Y[white_matter] = 1
         Y[gray_matter] = 2

@@ -411,3 +411,10 @@ def segmentation_knn(train_data, train_labels, test_data, k=1):
     predicted_labels = neigh.predict(test_data_norm)
 
     return predicted_labels
+
+def scatter_all(X,Y):
+    # scatter 2 features and their correspoding labels
+
+    # X is matrix consiting of features
+    # Y is
+    pass
