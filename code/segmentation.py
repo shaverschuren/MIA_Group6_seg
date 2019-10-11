@@ -9,6 +9,8 @@ import scipy
 from sklearn.neighbors import KNeighborsClassifier
 import segmentation_util as util
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 
 
@@ -426,6 +428,9 @@ def scatter_all(DM,LM):
         fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5))
         for i in range(column):
             for j in range(column):
-                util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
-    plt.show
+                if i==j:
+                    axs[i,j].hist(X[i,:], bins=5)
+                else:
+                    util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
+    plt.show()
     
