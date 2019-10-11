@@ -155,20 +155,17 @@ def kmeans_clustering(test_data, K=2):
 
 
     # the learning rate
-    mu = 0.01
+    start_mu = 0.1
 
     # iterations
-    num_iter = 100
+    num_iter = 30
 
     #------------------------------------------------------------------#
     # Initialize cluster centers and store them in w_initial
     X=test_data
     N, M = test_data.shape
-    print(test_data.shape)
     idx = np.random.randint(N, size=K)
-    print(idx)
     w_initial = X[idx, :]
-    print(w_initial)
 
     #------------------------------------------------------------------#
 
@@ -176,6 +173,7 @@ def kmeans_clustering(test_data, K=2):
     w_vector = w_initial.reshape(K*M, 1)
 
     for i in np.arange(num_iter):
+        mu=start_mu*np.exp(-5*i/num_iter)
         # gradient ascent
         w_vector = w_vector - mu*util.ngradient(fun,w_vector)
 
@@ -186,7 +184,6 @@ def kmeans_clustering(test_data, K=2):
     # Then find the minimum distances min_dist and indices min_index
 
     D = scipy.spatial.distance.cdist(X, w_final, metric='euclidean')
-    print(D.shape)
     min_index = np.argmin(D, axis=1)
     min_dist = np.zeros((D.shape[0], 1))
     for i in range(len(D[:, 1])):
