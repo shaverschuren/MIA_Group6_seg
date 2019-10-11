@@ -119,32 +119,32 @@ def extract_features(image_number, slice_number):
     I_blurred = ndimage.gaussian_filter(t1, sigma=10)
     X2 = I_blurred.flatten().T
     t1_blur_10 = X2.reshape(-1, 1)
-    features += ('T1 blur sigma=10',)
+    features += ('T1 Intensity (Gaussian)',)
 
     I_blurred_t2 = ndimage.gaussian_filter(t2, sigma=10)
     X3 = I_blurred_t2.flatten().T
     t2_blur_10 = X3.reshape(-1, 1)
-    features += ('T2 blur sigma=10',)
+    features += ('T2 Intensity (Gaussian)',)
 
 
 
     t_diff= (t1-t2)^2
     tf_diff = t_diff.flatten().T.astype(float)
     tf_diff = tf_diff.reshape(-1, 1)
-    features += ('diff t1-t2',)
+    features += ('T1-T2 difference',)
 
     t1_med = pro.create_my_feature(t1)
     t1f_med = t1_med.flatten().T
     t1f_med = t1f_med.reshape(-1, 1)
-    features += ('T1 median filter size=9',)
+    features += ('T1 Intensity (Median)',)
 
     t2_med = pro.create_my_feature(t2)
     t2f_med = t2_med.flatten().T
     t2f_med = t2f_med.reshape(-1, 1)
-    features += ('T2 median filter size=9',)
+    features += ('T2 Intensity (Median)',)
 
     c,c_im = seg.extract_coordinate_feature(t1)
-    features += ('Center',)
+    features += ('Distance to Center',)
 
     X = np.concatenate((X, t1_blur_10, t2_blur_10, tf_diff, t1f_med, t2f_med, c),axis=1)
     #------------------------------------------------------------------#

@@ -9,6 +9,7 @@ import scipy
 from sklearn.neighbors import KNeighborsClassifier
 import segmentation_util as util
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 
 
@@ -419,19 +420,56 @@ def scatter_all(DM,LM,FL):
     # LM is matrix with all labels_data
     # FL is array with all feature names
     
-    row,column,subject=DM.shape
-    subject=1
-    for im in range(subject):
-        X = DM[:, :, im]
-        Y = LM[:, im]
-        fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5),sharex=True,sharey=True)
-        
-        for i in range(column):
-            for j in range(column):
-                util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
+    # row,column,subject=DM.shape
+    # subject=1
+    # for im in range(subject):
+    #     X = DM[:, :, im]
+    #     Y = LM[:, im]
+    #     fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5),sharex=True,sharey=True)
+    #
+    #     for i in range(column):
+    #         for j in range(column):
+    #             axs[i,j].hold(True)
+    #             util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
+    #             axs[i,j].grid(True)
+    #             axs[i,j].set_xlim(2,-2)
+    #             axs[i,j].set_ylim(2,-2)
+    #             if i == column - 1:
+    #                 axs[i,j].set_xlabel(FL[j].format(j + 1))
+    #             if j == 0:
+    #                 axs[i,j].set_ylabel(FL[i].format(i + 1))
+    # plt.show()
+
+
+# #######################################
+
+    row, column, subject = DM.shape
+    subject = 5
+
+    fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5), sharex='all', sharey='all')
+    # colors = cm.rainbow(np.linspace(0, 1, len(class_labels)))
+    # legend_elements = [Patch(facecolor=colors[0], edgecolor='r', label='Background'),
+    #                    Patch(facecolor=colors[1], edgecolor='r', label='White matter'),
+    #                    Patch(facecolor=colors[2], edgecolor='r', label='Grey matter'),
+    #                    Patch(facecolor=colors[3], edgecolor='r', label='CSF')]
+
+    for i in range(column):
+        for j in range(column):
+            ax = axs[i, j]
+            ax.grid(True)
+            ax.set_xlim(-2, 2)
+            ax.set_ylim(-2, 2)
+            ax.legend(['Background', 'White matter', 'Grey matter', 'CSF'])
+            for im in range(subject):
+                X = DM[:, :, im]
+                Y = LM[:, im]
+                # if i == j:
+                #     ax.hist(X, bins=100)
+                # else:
+                util.scatter_data(X, Y, feature0=i, feature1=j, ax=ax)
                 if i == column - 1:
-                    axs[i,j].set_xlabel(FL[j].format(j + 1))
+                    axs[i, j].set_xlabel(FL[j].format(j + 1), fontsize=18)
                 if j == 0:
-                    axs[i,j].set_ylabel(FL[i].format(i + 1))
+                    axs[i, j].set_ylabel(FL[i].format(i + 1), fontsize=18)
+
     plt.show()
-    
