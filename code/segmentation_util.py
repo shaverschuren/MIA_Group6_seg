@@ -120,8 +120,13 @@ def extract_features(image_number, slice_number):
     X2 = X2.reshape(-1, 1)
     features += ('T1 blur',)
 
+    I_blurred_t2 = ndimage.gaussian_filter(t2, sigma=10)
+    X3 = I_blurred_t2.flatten().T
+    X3 = X3.reshape(-1, 1)
+    features += ('T2 blur',)
+
     c,c_im = seg.extract_coordinate_feature(t1)
-    X=np.concatenate((X,X2,c),axis=1)
+    X=np.concatenate((X,X2,X3,c),axis=1)
     features += ('Center',)
     #------------------------------------------------------------------#
     return X, features
