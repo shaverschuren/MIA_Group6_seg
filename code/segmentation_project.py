@@ -10,6 +10,13 @@ import numpy as np
 import segmentation_util as util
 import matplotlib.pyplot as plt
 import segmentation as seg
+from scipy import ndimage, stats
+
+def create_my_feature(I):
+
+    edge=ndimage.median_filter(I,(9))
+
+    return edge
 
 
 def segmentation_mymethod(train_data_matrix, train_labels_matrix, test_data, task='brain'):

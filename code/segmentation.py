@@ -423,6 +423,7 @@ def scatter_all(DM,LM,FL):
     # FL is array with all feature names
     
     row,column,subject=DM.shape
+    subject=1
     for im in range(subject):
         X = DM[:, :, im]
         Y = LM[:, im]
@@ -430,10 +431,7 @@ def scatter_all(DM,LM,FL):
         
         for i in range(column):
             for j in range(column):
-                if i==j:
-                    axs[i,j].hist(X[i,:], bins=5)
-                else:
-                    util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
+                util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
                 if i == column - 1:
                     axs[i,j].set_xlabel(FL[j].format(j + 1))
                 if j == 0:

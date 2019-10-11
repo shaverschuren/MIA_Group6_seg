@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import segmentation as seg
 from scipy import ndimage, stats
+import segmentation_project as pro
 
 def ngradient(fun, x, h=1e-3):
     # Computes the derivative of a function with numerical differentiation.
@@ -127,16 +128,25 @@ def extract_features(image_number, slice_number):
 
 
 
-    t_diff= t1-t2
+    t_diff= (t1-t2)^2
     tf_diff = t_diff.flatten().T.astype(float)
     tf_diff = tf_diff.reshape(-1, 1)
     features += ('diff t1-t2',)
 
+    t1_med = pro.create_my_feature(t1)
+    t1f_med = t1_med.flatten().T
+    t1f_med = t1f_med.reshape(-1, 1)
+    features += ('T1 median filter size=9',)
+
+    t2_med = pro.create_my_feature(t2)
+    t2f_med = t2_med.flatten().T
+    t2f_med = t2f_med.reshape(-1, 1)
+    features += ('T2 median filter size=9',)
 
     c,c_im = seg.extract_coordinate_feature(t1)
     features += ('Center',)
 
-    X = np.concatenate((X, t1_blur_10, t2_blur_10, tf_diff, c),axis=1)
+    X = np.concatenate((X, t1_blur_10, t2_blur_10, tf_diff, t1f_med, t2f_med, c),axis=1)
     #------------------------------------------------------------------#
     return X, features
 
@@ -176,10 +186,9 @@ def create_labels(image_number, slice_number, task):
         gray_matter  = (I == 7) | (I == 3)
         csf         = (I == 4) | (I == 8)
         background  = (I == 0) |  (I == 1) | (I == 6)
-        # print(I.flags)
+
         Y = np.copy(I)
-        # print(Y.flags)
-        # Y.setflags(write=1)
+
         Y[background] = 0
         Y[white_matter] = 1
         Y[gray_matter] = 2
