@@ -7,7 +7,7 @@ Project code+scripts for 8DC00 course
 # Imports
 
 import numpy as np
-import utilities as util
+import segmentation_util as util
 import matplotlib.pyplot as plt
 import segmentation as seg
 
