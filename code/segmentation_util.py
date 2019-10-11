@@ -117,17 +117,26 @@ def extract_features(image_number, slice_number):
 
     I_blurred = ndimage.gaussian_filter(t1, sigma=10)
     X2 = I_blurred.flatten().T
-    X2 = X2.reshape(-1, 1)
-    features += ('T1 blur',)
+    t1_blur_10 = X2.reshape(-1, 1)
+    features += ('T1 blur sigma=10',)
 
     I_blurred_t2 = ndimage.gaussian_filter(t2, sigma=10)
     X3 = I_blurred_t2.flatten().T
-    X3 = X3.reshape(-1, 1)
-    features += ('T2 blur',)
+    t2_blur_10 = X3.reshape(-1, 1)
+    features += ('T2 blur sigma=10',)
+
+
+
+    t_diff= t1-t2
+    tf_diff = t_diff.flatten().T.astype(float)
+    tf_diff = tf_diff.reshape(-1, 1)
+    features += ('diff t1-t2',)
+
 
     c,c_im = seg.extract_coordinate_feature(t1)
-    X=np.concatenate((X,X2,X3,c),axis=1)
     features += ('Center',)
+
+    X = np.concatenate((X, t1_blur_10, t2_blur_10, tf_diff, c),axis=1)
     #------------------------------------------------------------------#
     return X, features
 
