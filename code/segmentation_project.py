@@ -33,12 +33,20 @@ def segmentation_mymethod(train_data_matrix, train_labels_matrix, test_data, tas
     #------------------------------------------------------------------#
     #TODO: Implement your method here
 
+    choice_br=[0,1,5,6,7]
     train_data= train_data_matrix[:,:,1]
     train_labels=train_labels_matrix[:,1]
     ix = np.random.randint(len(train_data), size=1000)
-    train_datann = train_data[[ix], [0,1,5,6,7]]
-    train_labelsnn = train_labels[[ix], [0,1,5,6,7]]
-    predicted_labelsnn = seg.knn_classifier(train_datann, train_labelsnn, test_data, 35)
+
+    train_datann = train_data[:,choice_br]
+    train_datann = train_datann[ix,:]
+
+    train_labels_brain = train_labels>0
+    train_labelsnn = train_labels_brain[ix]
+
+    test_datann = test_data[:,choice_br]
+
+    predicted_labelsnn = seg.knn_classifier(train_datann, train_labelsnn, test_datann, 35)
     predicted_masknn = predicted_labelsnn.reshape(I.shape)
     openimage = scipy.ndimage.morphology.binary_opening(predicted_masknn, iterations=2)
     op_imf = openimage.flatten().T.astype(float)
