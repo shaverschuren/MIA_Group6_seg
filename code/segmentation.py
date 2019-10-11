@@ -414,18 +414,25 @@ def segmentation_knn(train_data, train_labels, test_data, k=1):
 
     return predicted_labels
 
-def scatter_all(DM,LM):
+def scatter_all(DM,LM,FL):
     # scatter 2 features and their correspoding labels
     # DM is matrix with all train_data
     # LM is matrix with all labels_data
+    # FL is array with all feature names
     
     row,column,subject=DM.shape
     for im in range(subject):
         X = DM[:, :, im]
         Y = LM[:, im]
-        fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5))
+        fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5),sharex=True,sharey=True)
+        
         for i in range(column):
             for j in range(column):
                 util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
-    plt.show
+                
+                if i == column - 1:
+                    axs[i,j].set_xlabel(FL[j].format(j + 1))
+                if j == 0:
+                    axs[i,j].set_ylabel(FL[i].format(i + 1))
+    plt.show()
     
