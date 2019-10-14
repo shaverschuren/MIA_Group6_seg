@@ -39,45 +39,67 @@ def segmentation_mymethod(train_data_matrix, train_labels_matrix, test_data, tas
     # Output:
     # predicted_labels    Predicted labels for the test slice
 
-    # ------------------------------------------------------------------ #
-    # TODO: Implement your method here
+    # =====================================================================================
 
-    # This method is comprised of a couple of steps, being:
+    # This method is comprised of a two steps, being:
     #
-    # 1) Segment the brain from the background/skull using a single K-nn algorithm (optimised via a learning curve)
-    #    and store the resulting mask for later use. (used features are .......)
+    # 1) Segment the entire image using a combined K-nn algorithm (optimised via a learning curve)
+    #    -> Note that all features were used. The segmentability and thus "weight" of each feature is accounted
+    #       for by the algorithm.
     # 2) Perform a morphological opening on this mask, in order to smooth out some of the poorly segmentable skull.
     #    Note that testing with this method during prototyping showed an increase in dice and decrease in error.
     #
-    #    IF: task == 'tissue':
-    #
-    # 3) Multiply the original picture with said mask, in order to improve the accuracy of the final classification
-    #    algorithm. We did this, since we had some trouble with segmenting out the skull and parts of the background.
-    # 4) Now, run the final combined K-nn algorithm, using feature bagging and a k-learning curve.
-    #
+    # ########################
 
+    # Set up prediction matrix
+    r, c = train_labels_matrix.shape
 
-    # choice_br=[0,1,5,6,7]
-    # train_data= train_data_matrix[:,:,1]
-    # train_labels=train_labels_matrix[:,1]
-    # ix = np.random.randint(len(train_data), size=1000)
-    #
-    # train_datann = train_data[:,choice_br]
-    # train_datann = train_datann[ix,:]
-    #
-    # train_labels_brain = train_labels>0
-    # train_labelsnn = train_labels_brain[ix]
-    #
-    # test_datann = test_data[:,choice_br]
-    #
-    # predicted_labelsnn = seg.knn_classifier(train_datann, train_labelsnn, test_datann, 35)
-    # predicted_masknn = predicted_labelsnn.reshape(I.shape)
-    # openimage = scipy.ndimage.morphology.binary_opening(predicted_masknn, iterations=2)
-    # op_imf = openimage.flatten().T.astype(float)
-    # op_imf = op_imf.reshape(-1, 1)
-    #
-    # train_data_brain = train_data*op_imf
-    # train_labels_brain = train_data*op_imf
+    predicted_labels = np.empty([r, c])
+    predicted_labels[:] = np.nan
+
+    # STEP 1: BACKGROUND SEGMENTATION
+
+    error_list = []
+    # Create learning curve and optimise over training data (we naturally can't use test data for optimisation)
+    k_list = [1, 3, 5, 7, 9, 11]
+    for k in k_list:
+
+        predicted_train_labels = predicted_labels.copy()
+
+        for i in np.arange(c-1):
+            predicted_train_labels[:, i] = seg.segmentation_knn(train_data_matrix[:, :, i], train_labels_matrix[:, i], train_data_matrix[:, :, c-1], k)
+
+        # combine labels
+        predicted_train_labels = stats.mode(predicted_train_labels, axis=1)[0]
+        # compute and store error
+        err = util.classification_error(train_labels_matrix[:, c-1], predicted_train_labels)
+        error_list.append(err)
+
+    # Find lowest error in list
+    optimum = error_list.index(min(error_list))
+    k_opt = k_list[optimum]
+
+    # Now, run the final K-nn algorithm, for known k.
+    for i in np.arange(c):
+        predicted_labels[:, i] = seg.segmentation_knn(train_data_matrix[:, :, i], train_labels_matrix[:, i], test_data, k_opt)
+
+    # Combine labels
+    predicted_labels_v1 = stats.mode(predicted_labels, axis=1)[0]
+    predicted_mask_v1 = predicted_labels_v1.reshape([240,240])
+
+    # STEP 2: MORPHOLOGICAL OPENING
+
+    # Perform opening. Note that the input image isn't binary. However, the function accounts for this, so not to worry.
+    # (num_iter = 2 was chosen via trial and error)
+    openimage = ndimage.morphology.binary_opening(predicted_mask_v1, iterations=1)
+
+    # Multiply opened binary mask with original mask
+    predicted_mask_v2 = predicted_mask_v1*openimage
+
+    # Flatten newly acquired mask for later use
+    predicted_labels_v2 = predicted_mask_v2.flatten()
+
+    predicted_labels = predicted_labels_v2
 
     # ------------------------------------------------------------------ #
     return predicted_labels
@@ -174,13 +196,116 @@ def segmentation_demo():
         ax2.set_xlabel(text_str)
         ax2.set_title('Subject {}: Combined k-NN'.format(sub))
 
-        # predicted_labels = segmentation_mymethod(train_data_matrix,train_labels_matrix,test_data,task)
-        # all_errors[i,2] = util.classification_error(test_labels, predicted_labels)
-        # all_dice[i,2] = util.dice_overlap(test_labels, predicted_labels)
-        # predicted_mask_3 = predicted_labels.reshape(im_size[0],im_size[1])
-        # ax3 = fig.add_subplot(133)
-        # ax3.imshow(test_shape_1, 'gray')
-        # ax3.imshow(predicted_mask_3, 'viridis', alpha=0.5)
-        # text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,2], all_dice[i,2])
-        # ax3.set_xlabel(text_str)
-        # ax3.set_title('Subject {}: My method'.format(sub))
+        predicted_labels = segmentation_mymethod(train_data_matrix,train_labels_matrix,test_data,task)
+        all_errors[i,2] = util.classification_error(test_labels, predicted_labels)
+        all_dice[i,2] = util.dice_overlap(test_labels, predicted_labels)
+        predicted_mask_3 = predicted_labels.reshape(im_size[0],im_size[1])
+        ax3 = fig.add_subplot(133)
+        ax3.imshow(test_shape_1, 'gray')
+        ax3.imshow(predicted_mask_3, 'viridis', alpha=0.5)
+        text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,2], all_dice[i,2])
+        ax3.set_xlabel(text_str)
+        ax3.set_title('Subject {}: My method'.format(sub))
+
+
+def segmentation_final():
+
+    train_subject = 1
+    test_subject = 2
+    train_slice = 1
+    test_slice = 1
+    task = 'tissue'
+
+    #Load data
+    train_data, train_labels, train_feature_labels = util.create_dataset(train_subject,train_slice,task)
+    test_data, test_labels, test_feature_labels = util.create_dataset(test_subject,test_slice,task)
+
+    predicted_labels = seg.segmentation_atlas(None, train_labels, None)
+
+    err = util.classification_error(test_labels, predicted_labels)
+    dice = util.dice_overlap(test_labels, predicted_labels)
+
+    #Display results
+    true_mask = test_labels.reshape(240, 240)
+    predicted_mask = predicted_labels.reshape(240, 240)
+
+    # fig = plt.figure(figsize=(8,8))
+    # ax1 = fig.add_subplot(111)
+    # ax1.imshow(true_mask, 'gray')
+    # ax1.imshow(predicted_mask, 'viridis', alpha=0.5)
+    # print('Subject {}, slice {}.\nErr {}, dice {}'.format(test_subject, test_slice, err, dice))
+
+    ## Compare methods
+    num_images = 5
+    num_methods = 3
+    im_size = [240, 240]
+
+    all_errors = np.empty([num_images,num_methods])
+    all_errors[:] = np.nan
+    all_dice = np.empty([num_images,num_methods])
+    all_dice[:] = np.nan
+
+    all_subjects = np.arange(num_images)
+    train_slice = 1
+    task = 'tissue'
+    all_data_matrix = np.empty([train_data.shape[0],train_data.shape[1],num_images])
+    all_labels_matrix = np.empty([train_labels.size,num_images], dtype=bool)
+
+    #Load datasets once
+    print('Loading data for ' + str(num_images) + ' subjects...')
+
+    for i in all_subjects:
+        sub = i+1
+        train_data, train_labels, train_feature_labels = util.create_dataset(sub,train_slice,task)
+        all_data_matrix[:,:,i] = train_data
+        all_labels_matrix[:,i] = train_labels.flatten()
+
+    print('Finished loading data.\nStarting segmentation...')
+
+    #Go through each subject, taking i-th subject as the test
+    for i in np.arange(num_images):
+        sub = i+1
+        #Define training subjects as all, except the test subject
+        train_subjects = all_subjects.copy()
+        train_subjects = np.delete(train_subjects, i)
+
+        train_data_matrix = all_data_matrix[:,:,train_subjects]
+        train_labels_matrix = all_labels_matrix[:,train_subjects]
+        test_data = all_data_matrix[:,:,i]
+        test_labels = all_labels_matrix[:,i]
+        test_shape_1 = test_labels.reshape(im_size[0],im_size[1])
+
+        fig = plt.figure(figsize=(15,5))
+
+        predicted_labels = seg.segmentation_combined_atlas(train_labels_matrix)
+        all_errors[i,0] = util.classification_error(test_labels, predicted_labels)
+        all_dice[i,0] = util.dice_overlap(test_labels, predicted_labels)
+        predicted_mask_1 = predicted_labels.reshape(im_size[0],im_size[1])
+        ax1 = fig.add_subplot(131)
+        ax1.imshow(test_shape_1, 'gray')
+        ax1.imshow(predicted_mask_1, 'viridis', alpha=0.5)
+        text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,0], all_dice[i,0])
+        ax1.set_xlabel(text_str)
+        ax1.set_title('Subject {}: Combined atlas'.format(sub))
+
+        predicted_labels = seg.segmentation_combined_knn(train_data_matrix,train_labels_matrix,test_data)
+        all_errors[i,1] = util.classification_error(test_labels, predicted_labels)
+        all_dice[i,1] = util.dice_overlap(test_labels, predicted_labels)
+        predicted_mask_2 = predicted_labels.reshape(im_size[0],im_size[1])
+        ax2 = fig.add_subplot(132)
+        ax2.imshow(test_shape_1, 'gray')
+        ax2.imshow(predicted_mask_2, 'viridis', alpha=0.5)
+        text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,1], all_dice[i,1])
+        ax2.set_xlabel(text_str)
+        ax2.set_title('Subject {}: Combined k-NN'.format(sub))
+
+        predicted_labels = segmentation_mymethod(train_data_matrix,train_labels_matrix,test_data,task)
+        all_errors[i,2] = util.classification_error(test_labels, predicted_labels)
+        all_dice[i,2] = util.dice_overlap(test_labels, predicted_labels)
+        predicted_mask_3 = predicted_labels.reshape(im_size[0],im_size[1])
+        ax3 = fig.add_subplot(133)
+        ax3.imshow(test_shape_1, 'gray')
+        ax3.imshow(predicted_mask_3, 'viridis', alpha=0.5)
+        text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,2], all_dice[i,2])
+        ax3.set_xlabel(text_str)
+        ax3.set_title('Subject {}: My method'.format(sub))
