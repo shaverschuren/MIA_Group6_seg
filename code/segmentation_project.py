@@ -179,7 +179,7 @@ def segmentation_final():
         all_labels_matrix[:,i] = train_labels.flatten()
 
     start = timeit.default_timer()
-    print('Finished loading data.\n\nStarting segmentation...\t\t[T=', round(timeit.default_timer()-start,3),'s]')
+    print('Finished loading data.\n\nStarting segmentation...\t[T=', round(timeit.default_timer()-start,3),'s]')
 
     #Go through each subject, taking i-th subject as the test
     for i in np.arange(num_images):
