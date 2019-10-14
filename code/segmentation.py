@@ -324,7 +324,7 @@ def segmentation_combined_atlas(train_labels_matrix, combining='mode'):
     else:
         raise ValueError("No such combining type exists")
 
-    return predicted_labels.astype(bool)
+    return predicted_labels # .astype(bool) >>>>>> WHYYYYYYYYY???........
 
 
 def segmentation_atlas(train_data, train_labels, test_data):
@@ -374,7 +374,7 @@ def segmentation_combined_knn(train_data_matrix, train_labels_matrix, test_data,
     #Combine labels
     predicted_labels = scipy.stats.mode(predicted_labels, axis=1)[0]
 
-    return predicted_labels.astype(bool)
+    return predicted_labels # .astype(bool) -------> why.
 
 
 def segmentation_knn(train_data, train_labels, test_data, k=1):
