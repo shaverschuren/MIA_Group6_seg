@@ -9,6 +9,7 @@ import segmentation as seg
 from scipy import ndimage, stats
 import segmentation_project as pro
 
+
 def ngradient(fun, x, h=1e-3):
     # Computes the derivative of a function with numerical differentiation.
     # Input:
@@ -23,7 +24,7 @@ def ngradient(fun, x, h=1e-3):
     # the function at x with numerical differentiation.
     # g[k] should store the partial derivative w.r.t. the k-th parameter
 
-    g = np.zeros_like(x);
+    g = np.zeros_like(x)
     for k in range(x.size):
         xh1=x.copy()
         xh2=x.copy()
@@ -40,8 +41,9 @@ def ngradient(fun, x, h=1e-3):
 
     return g
 
+
 def scatter_data(X, Y, feature0=0, feature1=1, ax=None):
-    # scater_data displays a scatterplot of at most 1000 samples from dataset X, and gives each point
+    # scatter_data displays a scatter-plot of at most 1000 samples from dataset X, and gives each point
     # a different color based on its label in Y
 
     k = 1000
@@ -116,37 +118,41 @@ def extract_features(image_number, slice_number):
     # Extract more features and add them to X.
     # Don't forget to provide (short) descriptions for the features
 
+    # Feature 3: T1 Gaussian filtered
     I_blurred = ndimage.gaussian_filter(t1, sigma=10)
     X2 = I_blurred.flatten().T
     t1_blur_10 = X2.reshape(-1, 1)
     features += ('T1 Intensity (Gaussian)',)
 
+    # Feature 4: T2 Gaussian filtered
     I_blurred_t2 = ndimage.gaussian_filter(t2, sigma=10)
     X3 = I_blurred_t2.flatten().T
     t2_blur_10 = X3.reshape(-1, 1)
     features += ('T2 Intensity (Gaussian)',)
 
-
-
-    t_diff= (t1-t2)^2
-    tf_diff = t_diff.flatten().T.astype(float)
-    tf_diff = tf_diff.reshape(-1, 1)
-    features += ('T1-T2 difference',)
-
+    # Feature 5: T1 Median filtered
     t1_med = pro.create_my_feature(t1)
     t1f_med = t1_med.flatten().T
     t1f_med = t1f_med.reshape(-1, 1)
     features += ('T1 Intensity (Median)',)
 
+    # Feature 6: T2 Median filtered
     t2_med = pro.create_my_feature(t2)
     t2f_med = t2_med.flatten().T
     t2f_med = t2f_med.reshape(-1, 1)
     features += ('T2 Intensity (Median)',)
 
+    # Feature 7: T1-T2 absolute difference
+    t_diff= np.sqrt((t1-t2)^2)
+    tf_diff = t_diff.flatten().T.astype(float)
+    tf_diff = tf_diff.reshape(-1, 1)
+    features += ('T1-T2 difference',)
+
+    # Feature 8: Distance to center
     c,c_im = seg.extract_coordinate_feature(t1)
     features += ('Distance to Center',)
 
-    X = np.concatenate((X, t1_blur_10, t2_blur_10, tf_diff, t1f_med, t2f_med, c),axis=1)
+    X = np.concatenate((X, t1_blur_10, t2_blur_10, t1f_med, t2f_med, tf_diff, c), axis=1)
     #------------------------------------------------------------------#
     return X, features
 
@@ -262,7 +268,6 @@ def dice_multiclass(true_labels, predicted_labels):
         temp_true[true_labels != all_classes[i]] = 0  #Everything else is background
 
         temp_predicted = predicted_labels.copy();
-        print(temp_predicted.dtype)
         temp_predicted[predicted_labels == all_classes[i]] = 1
         temp_predicted[predicted_labels != all_classes[i]] = 0
         dice_score[i] = dice_overlap(temp_true.astype(int), temp_predicted.astype(int))

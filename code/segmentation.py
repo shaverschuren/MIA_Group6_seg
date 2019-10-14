@@ -9,6 +9,7 @@ import scipy
 from sklearn.neighbors import KNeighborsClassifier
 import segmentation_util as util
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from matplotlib.patches import Patch
 import seaborn as sns
 
@@ -414,62 +415,42 @@ def segmentation_knn(train_data, train_labels, test_data, k=1):
 
     return predicted_labels
 
+
 def scatter_all(DM,LM,FL):
-    # scatter 2 features and their correspoding labels
+    # scatter 2 features and their corresponding labels
     # DM is matrix with all train_data
     # LM is matrix with all labels_data
     # FL is array with all feature names
-    
-    # row,column,subject=DM.shape
-    # subject=1
-    # for im in range(subject):
-    #     X = DM[:, :, im]
-    #     Y = LM[:, im]
-    #     fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5),sharex=True,sharey=True)
-    #
-    #     for i in range(column):
-    #         for j in range(column):
-    #             axs[i,j].hold(True)
-    #             util.scatter_data(X, Y, feature0=i, feature1=j, ax=axs[i,j])
-    #             axs[i,j].grid(True)
-    #             axs[i,j].set_xlim(2,-2)
-    #             axs[i,j].set_ylim(2,-2)
-    #             if i == column - 1:
-    #                 axs[i,j].set_xlabel(FL[j].format(j + 1))
-    #             if j == 0:
-    #                 axs[i,j].set_ylabel(FL[i].format(i + 1))
-    # plt.show()
-
-
-# #######################################
 
     row, column, subject = DM.shape
-    subject = 5
 
-    fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5), sharex='all', sharey='all')
-    # colors = cm.rainbow(np.linspace(0, 1, len(class_labels)))
-    # legend_elements = [Patch(facecolor=colors[0], edgecolor='r', label='Background'),
-    #                    Patch(facecolor=colors[1], edgecolor='r', label='White matter'),
-    #                    Patch(facecolor=colors[2], edgecolor='r', label='Grey matter'),
-    #                    Patch(facecolor=colors[3], edgecolor='r', label='CSF')]
+    fig, axs = plt.subplots(nrows=column, ncols=column, figsize=(column * 5, column * 5))
 
+    # Make array with appended data from all subjects
+    X = DM[:, :, 0]
+    Y = LM[:, 0]
+    for im in range(1, subject):
+        X = np.append(X, DM[:, :, im], axis=0)
+        Y = np.append(Y, LM[:, im], axis=0)
+
+    # Now, loop over figures
     for i in range(column):
         for j in range(column):
             ax = axs[i, j]
             ax.grid(True)
-            ax.set_xlim(-2, 2)
-            ax.set_ylim(-2, 2)
-            ax.legend(['Background', 'White matter', 'Grey matter', 'CSF'])
-            for im in range(subject):
-                X = DM[:, :, im]
-                Y = LM[:, im]
-                # if i == j:
-                #     ax.hist(X, bins=100)
-                # else:
+
+            # Plot stacked histograms on diagonals
+            if i == j:
+                ax.hist(X[:, i], bins=50, density=True)
+
+            # Scatter features on remaining subplots
+            else:
                 util.scatter_data(X, Y, feature0=i, feature1=j, ax=ax)
-                if i == column - 1:
-                    axs[i, j].set_xlabel(FL[j].format(j + 1), fontsize=18)
-                if j == 0:
-                    axs[i, j].set_ylabel(FL[i].format(i + 1), fontsize=18)
+
+            # Set labels on outside plots for readability
+            if i == column - 1:
+                axs[i, j].set_xlabel(FL[j].format(j + 1), fontsize=18)
+            if j == 0:
+                axs[i, j].set_ylabel(FL[i].format(i + 1), fontsize=18)
 
     plt.show()

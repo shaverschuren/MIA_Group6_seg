@@ -1,0 +1,23 @@
+=================== SEGMENTATION PROCESS =================
+
+- K-nn for segmenting brain from background (including skull)
+
+- Opening (corrosion + dilation) for establishing mask
+
+- Multiply mask with original picture to establish clear brain distinction
+
+- K-nn for segmenting different tissue types
+	(idea --> combine K-nn's with different feature sets)
+	(idea --> create K-nn learning curve to compare errors for
+		  finding optimal k)
+
+=================== FEATURES ================== 
+
+- T1 intensity
+- T2 intensity
+- T1 Gaussian
+- T2 Gaussian
+- T1 Median
+- T2 Median
+- T1-T2 difference
+- Distance to center

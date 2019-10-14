@@ -12,11 +12,20 @@ import matplotlib.pyplot as plt
 import segmentation as seg
 from scipy import ndimage, stats
 
+
 def create_my_feature(I):
 
-    edge=ndimage.median_filter(I,(9))
+    # This function is used to create median filtered images of both T1 and T2 data.
+    # It seems rather trivial; however, the added context and added "grouping" effect
+    # seemed quite helpful for a K-nn algorithm to us.
+    # Note that there will be no implementation of a PCA in this function, since we didn't find it to be incredibly
+    # helpful for the features used in our method.
+    #
+    # Other features we created involved 1) distance to center and 2) difference between T1 and T2 values
 
-    return edge
+    I_med_filt = ndimage.median_filter(I, 9)
+
+    return I_med_filt
 
 
 def segmentation_mymethod(train_data_matrix, train_labels_matrix, test_data, task='tissue'):
@@ -30,35 +39,47 @@ def segmentation_mymethod(train_data_matrix, train_labels_matrix, test_data, tas
     # Output:
     # predicted_labels    Predicted labels for the test slice
 
-    #------------------------------------------------------------------#
-    #TODO: Implement your method here
+    # ------------------------------------------------------------------ #
+    # TODO: Implement your method here
 
-    choice_br=[0,1,5,6,7]
-    train_data= train_data_matrix[:,:,1]
-    train_labels=train_labels_matrix[:,1]
-    ix = np.random.randint(len(train_data), size=1000)
-
-    train_datann = train_data[:,choice_br]
-    train_datann = train_datann[ix,:]
-
-    train_labels_brain = train_labels>0
-    train_labelsnn = train_labels_brain[ix]
-
-    test_datann = test_data[:,choice_br]
-
-    predicted_labelsnn = seg.knn_classifier(train_datann, train_labelsnn, test_datann, 35)
-    predicted_masknn = predicted_labelsnn.reshape(I.shape)
-    openimage = scipy.ndimage.morphology.binary_opening(predicted_masknn, iterations=2)
-    op_imf = openimage.flatten().T.astype(float)
-    op_imf = op_imf.reshape(-1, 1)
-
-    train_data_brain = train_data*op_imf
-    train_labels_brain = train_data*op_imf
+    # This method is comprised of a couple of steps, being:
+    #
+    # 1) Segment the brain from the background/skull using a single K-nn algorithm (optimised via a learning curve)
+    #    and store the resulting mask for later use. (used features are .......)
+    # 2) Perform a morphological opening on this mask, in order to smooth out some of the poorly segmentable skull.
+    #    Note that testing with this method during prototyping showed an increase in dice and decrease in error.
+    #
+    #    IF: task == 'tissue':
+    #
+    # 3) Multiply the original picture with said mask, in order to improve the accuracy of the final classification
+    #    algorithm. We did this, since we had some trouble with segmenting out the skull and parts of the background.
+    # 4) Now, run the final combined K-nn algorithm, using feature bagging and a k-learning curve.
+    #
 
 
+    # choice_br=[0,1,5,6,7]
+    # train_data= train_data_matrix[:,:,1]
+    # train_labels=train_labels_matrix[:,1]
+    # ix = np.random.randint(len(train_data), size=1000)
+    #
+    # train_datann = train_data[:,choice_br]
+    # train_datann = train_datann[ix,:]
+    #
+    # train_labels_brain = train_labels>0
+    # train_labelsnn = train_labels_brain[ix]
+    #
+    # test_datann = test_data[:,choice_br]
+    #
+    # predicted_labelsnn = seg.knn_classifier(train_datann, train_labelsnn, test_datann, 35)
+    # predicted_masknn = predicted_labelsnn.reshape(I.shape)
+    # openimage = scipy.ndimage.morphology.binary_opening(predicted_masknn, iterations=2)
+    # op_imf = openimage.flatten().T.astype(float)
+    # op_imf = op_imf.reshape(-1, 1)
+    #
+    # train_data_brain = train_data*op_imf
+    # train_labels_brain = train_data*op_imf
 
-
-    #------------------------------------------------------------------#
+    # ------------------------------------------------------------------ #
     return predicted_labels
 
 
@@ -153,13 +174,13 @@ def segmentation_demo():
         ax2.set_xlabel(text_str)
         ax2.set_title('Subject {}: Combined k-NN'.format(sub))
 
-        predicted_labels = segmentation_mymethod(train_data_matrix,train_labels_matrix,test_data,task)
-        all_errors[i,2] = util.classification_error(test_labels, predicted_labels)
-        all_dice[i,2] = util.dice_overlap(test_labels, predicted_labels)
-        predicted_mask_3 = predicted_labels.reshape(im_size[0],im_size[1])
-        ax3 = fig.add_subplot(133)
-        ax3.imshow(test_shape_1, 'gray')
-        ax3.imshow(predicted_mask_3, 'viridis', alpha=0.5)
-        text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,2], all_dice[i,2])
-        ax3.set_xlabel(text_str)
-        ax3.set_title('Subject {}: My method'.format(sub))
+        # predicted_labels = segmentation_mymethod(train_data_matrix,train_labels_matrix,test_data,task)
+        # all_errors[i,2] = util.classification_error(test_labels, predicted_labels)
+        # all_dice[i,2] = util.dice_overlap(test_labels, predicted_labels)
+        # predicted_mask_3 = predicted_labels.reshape(im_size[0],im_size[1])
+        # ax3 = fig.add_subplot(133)
+        # ax3.imshow(test_shape_1, 'gray')
+        # ax3.imshow(predicted_mask_3, 'viridis', alpha=0.5)
+        # text_str = 'Err {:.4f}, dice {:.4f}'.format(all_errors[i,2], all_dice[i,2])
+        # ax3.set_xlabel(text_str)
+        # ax3.set_title('Subject {}: My method'.format(sub))
